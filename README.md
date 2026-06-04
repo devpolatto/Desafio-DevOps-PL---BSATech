@@ -33,5 +33,3 @@ Entrega :
 - Repositório público (GitHub ou GitLab), com README.md explicando suas decisões e como executar tudo.
 - Histórico de commits semânticos.
 - git clone + docker compose up deve subir o ambiente funcional.
-
-## //
