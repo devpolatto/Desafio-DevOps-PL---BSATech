@@ -1,0 +1,41 @@
+name: PR Title Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-title:
+    name: Validate PR title (Conventional Commits)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          PATTERN='^(feat|fix|docs|style|refactor|test|chore|ci|perf|build|revert)(\(.+\))?: .+'
+
+          if echo "$PR_TITLE" | grep -qE "$PATTERN"; then
+            echo "✅ PR title is valid: \"$PR_TITLE\""
+          else
+            echo "❌ PR title does not follow Conventional Commits."
+            echo ""
+            echo "   Title received: \"$PR_TITLE\""
+            echo ""
+            echo "   Expected format:  <type>(<scope>): <description>"
+            echo "   Example:          feat(nginx): add HSTS header"
+            echo ""
+            echo "   Allowed types:"
+            echo "     feat     – new feature"
+            echo "     fix      – bug fix"
+            echo "     docs     – documentation only"
+            echo "     style    – formatting, no logic change"
+            echo "     refactor – code change, no feature or fix"
+            echo "     test     – adding or updating tests"
+            echo "     chore    – maintenance tasks"
+            echo "     ci       – CI/CD changes"
+            echo "     perf     – performance improvement"
+            echo "     build    – build system or dependencies"
+            echo "     revert   – revert a previous commit"
+            exit 1
+          fi
