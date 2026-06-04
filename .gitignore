@@ -1,0 +1,29 @@
+# Secrets — nunca commitar o .env real
+.env
+
+# Certificados SSL gerados localmente
+nginx/certs/*.pem
+nginx/certs/*.crt
+nginx/certs/*.key
+
+# Backups de banco de dados
+backups/*.sql.gz
+backups/*.sql
+backups/*.gz
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
