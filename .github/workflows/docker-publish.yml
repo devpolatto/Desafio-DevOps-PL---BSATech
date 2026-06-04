@@ -1,0 +1,42 @@
+name: Docker Publish — Nginx
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "nginx/Dockerfile"
+      - "nginx/nginx.conf"
+      - "nginx/docker-entrypoint.sh"
+
+jobs:
+  build-and-push:
+    name: Build & push bsatech-nginx
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_REPOSITORY }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
