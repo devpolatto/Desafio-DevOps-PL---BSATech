@@ -64,29 +64,29 @@ services:
       - blog_network
     restart: unless-stopped
 
-  # prometheus:
-  #   image: prom/prometheus:v3.12.0
-  #   ports:
-  #     - "9090:9090"
-  #   volumes:
-  #     - ./monitoring/prometheus:/etc/prometheus:ro
-  #     - prometheus_data:/prometheus
-  #   command:
-  #     - "--config.file=/etc/prometheus/prometheus.yml"
-  #     - "--storage.tsdb.path=/prometheus"
-  #     - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-  #     - "--web.console.templates=/usr/share/prometheus/consoles"
-  #     - "--web.enable-lifecycle"
-  #   networks:
-  #     - blog_network
-  #     - monitoring_network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy 2>/dev/null || exit 1"]
-  #     interval: 15s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 15s
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    networks:
+      - blog_network
+      - monitoring_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # alertmanager:
   #   image: prom/alertmanager:v0.32.1
@@ -120,48 +120,48 @@ services:
   #     prometheus:
   #       condition: service_healthy
 
-  # mysql-exporter:
-  #   image: prom/mysqld-exporter:latest
-  #   # mysqld-exporter >= 0.15 usa flags + variável de senha separada
-  #   environment:
-  #     MYSQLD_EXPORTER_PASSWORD: ${MYSQL_PASSWORD}
-  #   command:
-  #     - "--mysqld.address=mysql:3306"
-  #     - "--mysqld.username=${MYSQL_USER}"
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #   networks:
-  #     - blog_network
-  #     - monitoring_network
-  #   restart: unless-stopped
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_PASSWORD}
+    command:
+      - "--mysqld.address=mysql:3306"
+      - "--mysqld.username=${MYSQL_USER}"
+      - "--no-collect.slave_status"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - blog_network
+      - monitoring_network
+    restart: unless-stopped
 
-  # node-exporter:
-  #   image: prom/node-exporter:latest
-  #   pid: host
-  #   volumes:
-  #     - /proc:/host/proc:ro
-  #     - /sys:/host/sys:ro
-  #     - /:/rootfs:ro
-  #   command:
-  #     - "--path.procfs=/host/proc"
-  #     - "--path.sysfs=/host/sys"
-  #     - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
-  #   networks:
-  #     - monitoring_network
-  #   restart: unless-stopped
+  node-exporter:
+    image: prom/node-exporter:latest
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - monitoring_network
+    restart: unless-stopped
 
-  # cadvisor:
-  #   image: gcr.io/cadvisor/cadvisor:latest
-  #   privileged: true
-  #   volumes:
-  #     - /:/rootfs:ro
-  #     - /var/run:/var/run:ro
-  #     - /sys:/sys:ro
-  #     - /var/lib/docker:/var/lib/docker:ro
-  #   networks:
-  #     - monitoring_network
-  #   restart: unless-stopped
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - monitoring_network
+    restart: unless-stopped
 
 volumes:
   mysql_data:
