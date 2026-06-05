@@ -68,13 +68,20 @@ docker compose up -d
 
 | Serviço | URL | Credenciais |
 |---|---|---|
-| Blog Ghost | https://localhost | — |
-| Ghost Admin | https://localhost/ghost | Configure no primeiro acesso |
+| Blog Ghost (frontend) | https://localhost | — |
+| Ghost Admin (painel) | https://localhost/ghost | Criadas no primeiro acesso |
 | Prometheus | http://localhost:9090 | — |
 | AlertManager | http://localhost:9093 | — |
 | Grafana | http://localhost:3000 | `admin` / senha gerada pelo `setup-env.sh` |
 
 > O navegador exibirá aviso de certificado autoassinado — clique em "Avançado → Prosseguir". Comportamento esperado e documentado.
+
+### Ghost: frontend vs. painel administrativo
+
+O Ghost expõe dois contextos distintos:
+
+- **`https://localhost`** — o blog público. É o que os leitores veem. Possui um portal de assinatura por e-mail (magic link) que **não funciona em ambiente local** por não haver servidor SMTP configurado — comportamento esperado e fora do escopo deste desafio.
+- **`https://localhost/ghost`** — o painel administrativo. É onde posts são criados e o blog é gerenciado. Na primeira visita, um wizard solicita nome, e-mail e senha para criar a conta de admin. O login subsequente usa e-mail + senha diretamente, **sem dependência de e-mail ou SMTP**.
 
 ---
 
@@ -130,67 +137,3 @@ docker pull devpolatto/devops-challenge-nginx:latest
 ```
 
 > **Nota:** O ambiente (`docker-compose.yml`) já está configurado para consumir `devpolatto/devops-challenge-nginx:latest` diretamente do Docker Hub — não há build local necessário para subir o ambiente.
-
----
-
-## Backup e Restore do Banco de Dados
-
-### Fazer backup
-
-```bash
-./scripts/backup.sh
-```
-
-Cria o arquivo `backups/backup-YYYY-MM-DD-HHMMSS.sql.gz` com dump completo do banco Ghost.
-
-### Restaurar a partir de um backup
-
-```bash
-./scripts/restore.sh backups/backup-2026-06-05-103000.sql.gz
-```
-
-O script aceita tanto caminhos relativos (a partir da raiz do projeto) quanto absolutos.
-
-### Teste completo de backup e restore
-
-Execute o ciclo abaixo para validar que o processo funciona de ponta a ponta:
-
-**1. Crie um post de teste no Ghost Admin**
-
-Acesse `https://localhost/ghost`, faça login e publique um post com título reconhecível (ex: _"Post de teste backup"_).
-
-**2. Faça o backup**
-
-```bash
-./scripts/backup.sh
-# Saída: Backup created: ./backups/backup-2026-06-05-HHMMSS.sql.gz
-```
-
-Anote o nome do arquivo gerado.
-
-**3. Simule perda de dados — drope as tabelas**
-
-```bash
-docker compose exec mysql mysql \
-  -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" \
-  -e "DROP DATABASE $MYSQL_DATABASE; CREATE DATABASE $MYSQL_DATABASE;"
-```
-
-> Após este passo, acessar o Ghost retornará erro — o banco está vazio.
-
-**4. Restaure o backup**
-
-```bash
-./scripts/restore.sh backups/backup-2026-06-05-HHMMSS.sql.gz
-# Saída: Restore complete.
-```
-
-**5. Reinicie o Ghost para reconectar ao banco restaurado**
-
-```bash
-docker compose restart ghost
-```
-
-**6. Verifique**
-
-Acesse `https://localhost` — o post criado no passo 1 deve estar presente.
