@@ -1,10 +1,10 @@
-# Desafio Técnico - Desenvolvedor DevOps Pleno - BSA Tech
+# Desafio Técnico — DevOps Pleno — BSA Tech
+
+Ambiente de produção containerizado com **Ghost + MySQL + Nginx (HTTPS) + Prometheus + Grafana + AlertManager**, pronto para subir com um único comando.
 
 ## Desafio (Orientação original)
 
-### Objetivo
-
-Criar um ambiente com docker-compose para executar um blog e seus serviços, funcional ao ser clonado e iniciado com docker compose up.
+**Objetivo**: Criar um ambiente com docker-compose para executar um blog e seus serviços, funcional ao ser clonado e iniciado com docker compose up.
 
 Escolha uma stack:
 
@@ -33,6 +33,48 @@ Entrega :
 - Repositório público (GitHub ou GitLab), com README.md explicando suas decisões e como executar tudo.
 - Histórico de commits semânticos.
 - git clone + docker compose up deve subir o ambiente funcional.
+
+---
+
+## Pré-requisitos
+
+| Ferramenta | Versão mínima |
+|---|---|
+| Docker | 24+ |
+| Docker Compose plugin (`docker compose`) | v2 |
+| openssl | qualquer versão recente |
+| bash | 4+ |
+
+## Como executar
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/devpolatto/devops-challenge-bsatech.git
+cd devops-challenge-bsatech
+
+# 2. Gere o .env com senhas aleatórias seguras
+./scripts/setup-env.sh
+
+# 3. Suba o ambiente
+docker compose up -d
+
+# 4. (Opcional) Valide que tudo está saudável
+./scripts/test-environment.sh
+```
+
+> O certificado SSL autoassinado é gerado automaticamente na primeira subida do Nginx — nenhum passo extra necessário.
+
+## Serviços e URLs
+
+| Serviço | URL | Credenciais |
+|---|---|---|
+| Blog Ghost | https://localhost | — |
+| Ghost Admin | https://localhost/ghost | Configure no primeiro acesso |
+| Prometheus | http://localhost:9090 | — |
+| AlertManager | http://localhost:9093 | — |
+| Grafana | http://localhost:3000 | `admin` / senha gerada pelo `setup-env.sh` |
+
+> O navegador exibirá aviso de certificado autoassinado — clique em "Avançado → Prosseguir". Comportamento esperado e documentado.
 
 ---
 
