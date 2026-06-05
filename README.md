@@ -68,13 +68,20 @@ docker compose up -d
 
 | Serviço | URL | Credenciais |
 |---|---|---|
-| Blog Ghost | https://localhost | — |
-| Ghost Admin | https://localhost/ghost | Configure no primeiro acesso |
+| Blog Ghost (frontend) | https://localhost | — |
+| Ghost Admin (painel) | https://localhost/ghost | Criadas no primeiro acesso |
 | Prometheus | http://localhost:9090 | — |
 | AlertManager | http://localhost:9093 | — |
 | Grafana | http://localhost:3000 | `admin` / senha gerada pelo `setup-env.sh` |
 
 > O navegador exibirá aviso de certificado autoassinado — clique em "Avançado → Prosseguir". Comportamento esperado e documentado.
+
+### Ghost: frontend vs. painel administrativo
+
+O Ghost expõe dois contextos distintos:
+
+- **`https://localhost`** — o blog público. É o que os leitores veem. Possui um portal de assinatura por e-mail (magic link) que **não funciona em ambiente local** por não haver servidor SMTP configurado — comportamento esperado e fora do escopo deste desafio.
+- **`https://localhost/ghost`** — o painel administrativo. É onde posts são criados e o blog é gerenciado. Na primeira visita, um wizard solicita nome, e-mail e senha para criar a conta de admin. O login subsequente usa e-mail + senha diretamente, **sem dependência de e-mail ou SMTP**.
 
 ---
 
