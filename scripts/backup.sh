@@ -19,7 +19,7 @@ mkdir -p "$BACKUP_DIR"
 echo "Starting backup..."
 
 if docker compose -f "$PROJECT_ROOT/docker-compose.yml" exec -T mysql \
-    mysqldump -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" \
+    mysqldump -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --no-tablespaces "$MYSQL_DATABASE" \
     | gzip > "$BACKUP_FILE"; then
     echo "Backup created: $BACKUP_FILE"
 else
