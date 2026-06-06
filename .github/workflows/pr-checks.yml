@@ -1,4 +1,4 @@
-name: PR Title Check
+name: PR Checks
 
 on:
   pull_request:
@@ -39,3 +39,20 @@ jobs:
             echo "     revert   – revert a previous commit"
             exit 1
           fi
+
+  yaml-lint:
+    name: Lint YAML files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint.yml
+          file_or_dir: >-
+            docker-compose.yml
+            .github/workflows/
+            monitoring/prometheus/
+            monitoring/alertmanager/
+            monitoring/grafana/provisioning/
