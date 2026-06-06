@@ -63,6 +63,8 @@ services:
     networks:
       - blog_network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
   prometheus:
     image: prom/prometheus:v3.12.0
