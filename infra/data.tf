@@ -1,5 +1,5 @@
 module "sharedvariables" {
-  source = "git::ssh://git@ssh.dev.azure.com/v3/polattoxcodelearning/Lab/TerraformModules//shared-variables?ref=main"
+  source = "git::ssh://git@ssh.dev.azure.com/v3/polattoxcodelearning/Lab/TerraformModules//shared-variables?ref=bf1945a707fefe70efaabe11f2a263f953f05cba"
 }
 
 data "azurerm_key_vault" "kv" {
