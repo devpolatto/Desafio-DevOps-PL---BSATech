@@ -11,7 +11,6 @@ RUN chmod +x /bsatech-entrypoint.sh
 
 EXPOSE 80 443
 
-RUN addgroup -S nginx && adduser -S nginx -G nginx
 USER nginx
 
 ENTRYPOINT ["/bsatech-entrypoint.sh"]
