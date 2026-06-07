@@ -9,6 +9,9 @@ on:
       - "nginx/nginx.conf"
       - "nginx/docker-entrypoint.sh"
 
+permissions:
+  contents: read
+
 jobs:
   build-and-push:
     name: Build & push bsatech-nginx

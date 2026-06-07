@@ -403,11 +403,129 @@ terraform apply -var-file="environments/prod.tfvars"
 
 ---
 
+## Security Scanning
+
+Validação automatizada de vulnerabilidades em imagens Docker e Infrastructure-as-Code via **SAST (Static Application Security Testing)**.
+
+### Executar localmente
+
+O projeto inclui um script para rodar security scans na sua máquina:
+
+```bash
+# Ambos (Trivy + Checkov)
+./scripts/scan-security.sh
+
+# Apenas Trivy (varredura de imagens Docker)
+./scripts/scan-security.sh trivy
+
+# Apenas Checkov (varredura de IaC)
+./scripts/scan-security.sh checkov
+```
+
+**Pré-requisitos para executar localmente:**
+
+| Ferramenta | Instalação | Propósito |
+|---|---|---|
+| Trivy | `brew install aquasecurity/trivy/trivy` (macOS) | Scan de vulnerabilidades em imagens Docker |
+| Checkov | `pip install checkov` | Scan de misconfigurations em docker-compose, Terraform e workflows |
+
+Se as ferramentas não estiverem instaladas, o script fornecerá instruções.
+
+### Trivy — Varredura de Imagens Docker
+
+Verifica a imagem Nginx customizada por vulnerabilidades conhecidas em pacotes do SO e dependências:
+
+```bash
+./scripts/scan-security.sh trivy
+```
+
+**O que é verificado:**
+- Vulnerabilidades em pacotes Alpine Linux
+- Dependências npm/Python (se houver)
+- Imagens base desatualizadas
+- Privilégios excessivos em RUN commands
+
+**Severidades:**
+- 🔴 **CRITICAL** — Explor remotamente sem auth
+- 🟠 **HIGH** — Exploit remoto ou escalação local
+- 🟡 **MEDIUM** — Impacto limitado ou difícil de explorar
+- 🔵 **LOW** — Informacional ou impacto mínimo
+
+### Checkov — Varredura de Infrastructure-as-Code
+
+Verifica misconfigurations em arquivos de configuração (docker-compose, Terraform, workflows):
+
+```bash
+./scripts/scan-security.sh checkov
+```
+
+**O que é verificado:**
+
+| Categoria | Exemplo |
+|---|---|
+| **Docker** | Imagens sem digest, usuário root, missing health checks |
+| **Kubernetes** | Privilégios excessivos, resource limits faltando, secrets hardcoded |
+| **Terraform** | Storage público, database accessible from internet, logging desabilitado |
+| **GitHub Actions** | Secrets em logs, missing OIDC, terceiros não auditados |
+
+### CI/CD — Scanning Automatizado
+
+Workflow: `.github/workflows/sast-scan.yml`
+
+Runs automaticamente em:
+- **Pull Requests:** Info mode — escaneia e comenta resultados, não bloqueia merge
+- **Push em `master`:** SARIF artifacts enviados para GitHub Security tab
+- **Manual trigger:** Via GitHub UI (`Actions` tab → `SAST Security Scanning` → `Run workflow`)
+
+**Matriz de jobs:**
+
+| Job | Trigger | Ação |
+|---|---|---|
+| `trivy-scan` | PR + push + manual | Escaneia `devpolatto/devops-challenge-nginx:latest` |
+| `checkov-scan` | PR + push + manual | Escaneia docker-compose, Terraform, workflows |
+| `security-gate` | push `master` + manual | Info: verifica se SARIF foi gerado |
+
+**Visualizando resultados:**
+
+1. No PR: Veja comentários do bot com tabelas de vulnerabilidades
+2. No repositório: `Security` tab → `Code scanning` → resultados SARIF
+3. Localmente: `./scripts/scan-security.sh`
+
+### Resolvendo vulnerabilidades
+
+**Se Trivy encontrar uma vulnerabilidade:**
+
+1. **Atualize o pacote** no `nginx/Dockerfile`:
+   ```dockerfile
+   RUN apk update && apk upgrade openssl
+   ```
+
+2. **Rebuild e teste:**
+   ```bash
+   docker build -t devpolatto/devops-challenge-nginx:latest ./nginx
+   ./scripts/scan-security.sh trivy
+   ```
+
+3. Commit + push: CI corre scan novamente
+
+**Se Checkov encontrar um misconfiguration:**
+
+1. **Revise a recomendação** no relatório
+2. **Ajuste a configuração** (docker-compose.yml, Terraform, etc.)
+3. **Teste localmente:**
+   ```bash
+   ./scripts/scan-security.sh checkov
+   ```
+
+4. Commit + push: CI valida
+
+---
+
 ## CI Pipeline
 
 ### PR Title Check
 
-Workflow: `.github/workflows/pr-title-check.yml`
+Workflow: `.github/workflows/pr-checks.yml`
 
 Valida o título de todo Pull Request contra o padrão **Conventional Commits**:
 
@@ -429,3 +547,15 @@ Valida o título de todo Pull Request contra o padrão **Conventional Commits**:
 Workflow: `.github/workflows/docker-publish.yml`
 
 Faz build e push da imagem Nginx automaticamente a cada push em `master` que altere arquivos em `nginx/`. Ver seção [Imagem Docker Custom](#imagem-docker-custom----devpolattodedevops-challenge-nginx) para detalhes.
+
+### SAST Security Scanning
+
+Workflow: `.github/workflows/sast-scan.yml`
+
+Executa automaticamente em todo PR e push para `master`:
+- **Trivy:** Varredura de vulnerabilidades em imagens Docker
+- **Checkov:** Varredura de misconfigurations em IaC (docker-compose, Terraform, workflows)
+
+Resultados aparecem como comentários em PRs e no tab `Security` do repositório (SARIF format).
+
+Para rodar localmente antes de commitar, veja a seção [Security Scanning](#security-scanning).
