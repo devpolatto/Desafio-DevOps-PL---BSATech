@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  pull-requests: write
 
 jobs:
   trivy-scan:
@@ -33,7 +34,7 @@ jobs:
           exit-code: "0" # Don't fail on findings; use sarif for visibility
 
       - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
@@ -87,7 +88,7 @@ jobs:
           compact: false
 
       - name: Upload Checkov results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "checkov-results.sarif"
@@ -98,7 +99,7 @@ jobs:
         run: |
           pip install checkov -q
           checkov -d . \
-            --framework docker,kubernetes,github_actions,terraform \
+            --framework dockerfile,kubernetes,github_actions,terraform \
             --compact \
             --skip-check CKV_DOCKER_2,CKV_DOCKER_7 \
             --output cli 2>&1 | tee checkov-results.txt || true
