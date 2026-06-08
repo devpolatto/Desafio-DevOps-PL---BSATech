@@ -121,6 +121,7 @@ O workflow `.github/workflows/docker-publish.yml` faz o build e push automaticam
 |---|---|
 | `latest` | Sempre aponta para o build mais recente |
 | `<7-char-sha>` | SHA curto do commit — rastreabilidade total entre imagem e código |
+| `<versão>` | Versão SemVer (ex: `v0.1.0`, `v0.2.0`) — gerada pelo Release Please |
 
 **Secrets necessários no repositório GitHub** (`Settings → Secrets → Actions`):
 
@@ -130,6 +131,51 @@ DOCKERHUB_TOKEN       — Access Token (hub.docker.com → Account Settings → 
 DOCKERHUB_REPOSITORY  — nome completo da imagem (ex: devpolatto/devops-challenge-nginx)
 ```
 
+### Release — Versionamento Automático com Release Please
+
+O versionamento semântico é totalmente automatizado via [Release Please](https://github.com/googleapis/release-please):
+
+**Fluxo:**
+
+1. **Commits semânticos são feitos** na branch `master`:
+   ```bash
+   git commit -m "feat(nginx): add security header X-Permitted-Cross-Domain-Policies"
+   git commit -m "fix(nginx): correct SSL cipher order"
+   ```
+
+2. **Release Please detecta os commits** e cria automaticamente um PR de release com:
+   - Versão calculada (MAJOR.MINOR.PATCH baseado em feat/fix/breaking)
+   - CHANGELOG gerado
+   - Bump do `.release-please-manifest.json`
+
+3. **Merge do PR de release**:
+   - Cria git tag (ex: `v0.2.0`)
+   - Publica GitHub Release com CHANGELOG
+   - Dispara `docker-publish.yml` que tagueia a imagem com a versão
+
+**Exemplo:**
+
+```
+Commits: feat(nginx) + fix(nginx) + fix(nginx)
+↓
+Release Please detecta 1 feature + 2 fixes
+↓
+Propõe versão 0.2.0 (minor bump)
+↓
+PR de release criado com CHANGELOG automático
+↓
+Merge → git tag v0.2.0 + GitHub Release
+↓
+docker-publish publica: devpolatto/devops-challenge-nginx:latest
+                         devpolatto/devops-challenge-nginx:v0.2.0
+                         devpolatto/devops-challenge-nginx:<sha>
+```
+
+**Visualizar versões atuais:**
+
+- GitHub Releases: https://github.com/devpolatto/devops-challenge-bsatech/releases
+- Docker Hub tags: https://hub.docker.com/r/devpolatto/devops-challenge-nginx/tags
+
 ### Comandos manuais (referência)
 
 Para rodar o processo fora da CI ou em ambiente sem GitHub Actions:
@@ -138,14 +184,16 @@ Para rodar o processo fora da CI ou em ambiente sem GitHub Actions:
 # 1. Autenticar no Docker Hub
 docker login
 
-# 2. Build com as duas tags
+# 2. Build com as três tags (latest, version, sha)
 docker build \
   -t devpolatto/devops-challenge-nginx:latest \
+  -t devpolatto/devops-challenge-nginx:v0.2.0 \
   -t devpolatto/devops-challenge-nginx:$(git rev-parse --short HEAD) \
   ./nginx
 
-# 3. Push de ambas as tags
+# 3. Push de todas as tags
 docker push devpolatto/devops-challenge-nginx:latest
+docker push devpolatto/devops-challenge-nginx:v0.2.0
 docker push devpolatto/devops-challenge-nginx:$(git rev-parse --short HEAD)
 
 # 4. Verificar a imagem no registry
@@ -541,6 +589,40 @@ Valida o título de todo Pull Request contra o padrão **Conventional Commits**:
 | `fix(nginx): correct SSL cipher` | ✅ Passa |
 | `Fix bug` | ❌ Falha — sem prefixo semântico |
 | `update stuff` | ❌ Falha — sem prefixo semântico |
+
+### Release Please — Versionamento Automático
+
+Workflow: `.github/workflows/release-please.yml`
+
+Gerencia versioning semântico automático baseado em commits semânticos:
+
+**Como funciona:**
+
+1. Commits com `feat:` aumentam MINOR (0.1.0 → 0.2.0)
+2. Commits com `fix:` aumentam PATCH (0.1.0 → 0.1.1)
+3. Commits com `BREAKING CHANGE:` aumentam MAJOR (0.1.0 → 1.0.0)
+
+**Fluxo:**
+
+```
+Novo commit em master
+         ↓
+Release Please detecta commits semânticos
+         ↓
+Cria PR de release com CHANGELOG automático
+         ↓
+Merge do PR → git tag + GitHub Release
+         ↓
+docker-publish publica imagem com versão SemVer
+```
+
+**Configuração:**
+- `release-please-config.json` — define tipo de release e formato de changelog
+- `.release-please-manifest.json` — rastreia versão atual
+
+**Visualizar releases:**
+- GitHub: https://github.com/devpolatto/devops-challenge-bsatech/releases
+- Docker Hub: https://hub.docker.com/r/devpolatto/devops-challenge-nginx/tags
 
 ### Docker Publish
 
