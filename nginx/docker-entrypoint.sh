@@ -19,5 +19,8 @@ if [ ! -f /etc/nginx/certs/dhparam.pem ]; then
     echo "[nginx-init] dhparam gerado em /etc/nginx/certs/dhparam.pem"
 fi
 
-# Delega para o entrypoint oficial do nginx:alpine
+# Garante permissões adequadas nos arquivos de certificado
+chown -R nginx:nginx /etc/nginx/certs 2>/dev/null || true
+
+# Delega para o entrypoint oficial do nginx:alpine (que faz a mudança de user)
 exec /docker-entrypoint.sh "$@"

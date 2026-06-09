@@ -11,7 +11,5 @@ RUN chmod +x /bsatech-entrypoint.sh
 
 EXPOSE 80 443
 
-USER nginx
-
 ENTRYPOINT ["/bsatech-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
